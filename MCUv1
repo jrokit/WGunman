@@ -1,0 +1,54 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+const char* ssid = "ESP8266_AP";
+const char* password = "esp8266pass";
+
+const int gpioPin = 5;   // GPIO5 = D1
+
+ESP8266WebServer server(80);
+
+String getGPIOState() {
+  int state = digitalRead(gpioPin);
+
+  if (state == LOW) {
+    return "ON";
+  } else {
+    return "OFF";
+  }
+}
+
+void handleRoot() {
+  String html = "<!DOCTYPE html><html>";
+  html += "<head>";
+  html += "<meta http-equiv='refresh' content='1'>"; // auto-refresh co 1s
+  html += "<title>ESP8266 GPIO</title>";
+  html += "</head><body>";
+  html += "<h1>Status GPIO</h1>";
+  html += "<p>GPIO: <b>5</b></p>";
+  html += "<p>Stan: <b>" + getGPIOState() + "</b></p>";
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(gpioPin, INPUT_PULLUP);
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+
+  Serial.print("AP IP address: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/", handleRoot);
+  server.begin();
+
+  Serial.println("HTTP server started");
+}
+
+void loop() {
+  server.handleClient();
+}
